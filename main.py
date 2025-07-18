@@ -10,8 +10,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 import json
-from helper import get_csv_row_count, batch_fetch_campany
+from helper import get_csv_row_count, batch_fetch_campany, write_to_csv
 from concurrent.futures import ThreadPoolExecutor
+from colorama import Fore, Back, Style
 
 
 url = 'https://www.difc.com/api/handleRequest'
@@ -32,21 +33,19 @@ headers = {
 
 # Fetch the number of existing rows to use as the starting offset
 offset = get_csv_row_count()
-if offset > 0:
-    # decresing one, to remove colomn name row
-    offset -= 1
 
-print(f"Found {offset} existing rows in result.csv. Starting from there.")
+print(Fore.GREEN,f"Found {offset} existing rows in result.csv. Starting from there.")
+current_page = int(offset/10)
 
-i = 0
-while i < 2:
-    i += 1
+till_page_number = int(input(f"how many page you want to scrap from page {current_page} : "))
+
+for i in range(till_page_number):
     payload_data = {
         "name": "",
         "licenseType": "",
         "licenseNo": "",
         "status": "",
-        "offset": offset + 10,
+        "offset": offset,
         "slug": "/CRM/public-register",
         "method": "POST"
     }
@@ -66,11 +65,15 @@ while i < 2:
         break
     company_ids = [comp.get("Id") for comp in company_list]
     
-    print(f"Extracted for {offset} offset, list : {company_ids}")
+    print(f"Extracted for {offset} offset, page : {current_page+i}, list : {company_ids}")
    
     # go through company_ids and retrive data
     # batch processing, batch 10
     companies_data = batch_fetch_campany(company_ids)
 
     # write companie data to resutl.
-    
+    write_to_csv(companies_data)
+    print(f"Written : {(current_page*10) + ((i+1)*10)} Records : Success")
+
+    # increase offset to 10 to fetch next page
+    offset += 10

@@ -73,6 +73,48 @@ def batch_fetch_campany(company_ids):
 
 
 def write_to_csv(data, file_name="result.csv"):
-    # if csv not found create csv with colomns
-    # add data to csv, data.keys is the colomn names
-    pass
+    """Writes a list of dictionaries to a CSV file with a specific column order."""
+    if not data:
+        print("No data to write.")
+        return
+
+    # Define the exact order of columns for the CSV file.
+    fieldnames = [
+        "registration_number",
+        "company_name",
+        "entity_status",
+        "business_type",
+        "type_of_license",
+        "legal_structure",
+        "date_of_registration",
+        "date_of_dissolution",
+        "trading_name",
+        "dnfbp",
+        "data_protection_officer_appointed",
+        "telephone",
+        "activities",
+        "registered_office",
+        "financial_year_end",
+        "share_capital",
+        "directors",
+        "shareholders",
+        "auditor",
+        "company_secretary",
+        "marketing_data",
+        "membership_stuff"
+    ]
+
+    # Check if the file is new or empty to decide whether to write the header.
+    write_header = not os.path.exists(file_name) or os.path.getsize(file_name) == 0
+
+    try:
+        with open(file_name, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+            if write_header:
+                writer.writeheader()
+
+            writer.writerows(data)
+            print(f"Successfully wrote {len(data)} rows to {file_name}")
+    except IOError as e:
+        print(f"I/O error while writing to {file_name}: {e}")
