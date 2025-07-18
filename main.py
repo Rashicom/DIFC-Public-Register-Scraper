@@ -65,7 +65,8 @@ for i in range(till_page_number):
         break
     company_ids = [comp.get("Id") for comp in company_list]
     
-    print(f"Extracted for {offset} offset, page : {current_page+i}, list : {company_ids}")
+    print(f"Extracted for {offset} offset, page : {current_page+i}")
+    print("Batch fetching: ",company_ids)
    
     # go through company_ids and retrive data
     # batch processing, batch 10

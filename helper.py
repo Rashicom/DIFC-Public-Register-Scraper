@@ -58,6 +58,7 @@ def retrive_company_data(company_id):
             "auditor": " | ".join(auditor.get("NameofAuditorFirm", "Not Found") for auditor in response_json.get("Auditor", [])),
             "company_secretary": " | ".join(secretary.get("SecretaryName", "Not Found") for secretary in response_json.get("CompanySecretary", [])),
             "marketing_data": f"{response_json.get("MarketingFields", {}).get("Email", "Not Found")} | {response_json.get("MarketingFields", {}).get("Telephonenumber", "Not Found")}",
+            "current_registered_agent_and_business_address": f"{response_json.get("HostingCompany", "Not Found")} | {response_json.get("HostingOfficeAddress", "Not Found")}",
             "membership_stuff": str(response_json.get("Membershipstuff", "Not Found"))
         }
         return data
@@ -101,6 +102,7 @@ def write_to_csv(data, file_name="result.csv"):
         "auditor",
         "company_secretary",
         "marketing_data",
+        "current_registered_agent_and_business_address",
         "membership_stuff"
     ]
 
