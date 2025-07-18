@@ -61,6 +61,7 @@ for i in range(till_page_number):
         company_list = response.json().get("Data").get("companyList")
     except Exception as e:
         print("Exception :", e)
+        print("response :", response.json())
         print("Stopped when offset : {offset}")
         break
     company_ids = [comp.get("Id") for comp in company_list]
