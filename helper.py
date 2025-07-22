@@ -83,6 +83,8 @@ def retrive_company_id(company_number):
     }
     resp = requests.post(url, data=json.dumps(payload_data))
     if resp.status_code == 200:
+        if not resp.json().get("Data").get("companyList"):
+            return None
         return resp.json().get("Data").get("companyList")[0].get("Id")
     else:
         raise Exception(f"Cannot get company id : {company_number}, url : {url}")
