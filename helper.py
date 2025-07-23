@@ -10,6 +10,9 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 import pprint
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+
 def get_csv_row_count(filename="result.csv"):
     """Gets the number of data rows in a CSV file (excluding the header)."""
     if not os.path.exists(filename) or os.path.getsize(filename) == 0:
@@ -37,7 +40,7 @@ def retrive_company_data(company_id):
     if response.status_code == 200:
         response_json = response.json().get("Data").get("DIFCData").get("PublicRegistry")[-1]
         data = {
-            "registration_number": response_json.get("RegisteredNumber", "Not Found"),
+            "registration_number": f"{int(response_json.get("RegisteredNumber", "Not Found")):04d}",
             "company_name": " | ".join(name.get("Name", "Not Found") for name in response_json.get("EntityName", [])),
             "entity_status": response_json.get("EntityStatus", "Not Found"),
             "business_type": response_json.get("CompanyType", "Not Found"),
@@ -66,10 +69,48 @@ def retrive_company_data(company_id):
         raise Exception(f"Cannot get company data : {company_id}, url : {url}")
     
 
+
+def retrive_company_id(company_number):
+    url = 'https://www.difc.com/api/handleRequest'
+    payload_data = {
+        "licenseNo": company_number,
+        "licenseType": "",
+        "method": "POST",
+        "name": "",
+        "offset": 0,
+        "slug": "/CRM/public-register",
+        "status": ""
+    }
+    resp = requests.post(url, data=json.dumps(payload_data))
+    if resp.status_code == 200:
+        if not resp.json().get("Data").get("companyList"):
+            return None
+        return resp.json().get("Data").get("companyList")[0].get("Id")
+    else:
+        raise Exception(f"Cannot get company id : {company_number}, url : {url}")
+
 def batch_fetch_campany(company_ids):
+    results = []
     with ThreadPoolExecutor() as executor:
-        result= list(executor.map(retrive_company_data, company_ids))
-    return result
+        futures = {executor.submit(retrive_company_data, cid): cid for cid in company_ids}
+        for future in tqdm(as_completed(futures), total=len(company_ids), desc="Scrapping company datas"):
+            cid = futures[future]
+            try:
+                data = future.result()
+                tqdm.write(f"✔️ Retrieved data for company ID: {cid}")
+                results.append(data)
+            except Exception as e:
+                tqdm.write(f"❌ Failed to retrieve data for company ID: {cid} — {e}")
+    return results
+
+
+def batch_fetch_company_ids(company_numbers=[]):
+    results = []
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(retrive_company_id, number) for number in company_numbers]
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Fetching company IDs"):
+            results.append(future.result())
+    return results
 
 
 
